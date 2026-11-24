@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineWorld - Discover Blockbusters, Reviews & Cast Info</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Montserrat:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cine: {
+                            black: '#0A0A0D',
+                            dark: '#14141A',
+                            card: '#1C1C24',
+                            gold: '#F5C518',
+                            goldHover: '#DFB00F',
+                            red: '#E50914',
+                            redHover: '#B80710',
+                            gray: '#9CA3AF',
+                            lightGray: '#2A2A36'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'Montserrat', 'sans-serif'],
+                        heading: ['Cinzel', 'serif'],
+                        body: ['Montserrat', 'sans-serif']
+                    },
+                    boxShadow: {
+                        'glow-gold': '0 0 25px rgba(245, 197, 24, 0.25)',
+                        'glow-red': '0 0 25px rgba(229, 9, 20, 0.3)',
+                        'card': '0 10px 30px rgba(0, 0, 0, 0.5)'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Styles & Scrollbars */
+        body {
+            background-color: #0A0A0D;
+            color: #F3F4F6;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        /* Glassmorphic Navbar */
+        .glass-header {
+            background: rgba(10, 10, 13, 0.88);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+
+        /* Hide scrollbars */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Toast animation */
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .animate-toast {
+            animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Line Clamping */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="relative min-h-screen flex flex-col antialiased selection:bg-cine-gold selection:text-black">
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container" class="fixed top-24 right-5 z-50 flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- NAVIGATION BAR -->
+    <header class="sticky top-0 z-40 w-full glass-header border-b border-cine-lightGray/40 shadow-2xl transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+            
+            <!-- Brand Logo -->
+            <a href="#home" onclick="showSection('browse')" class="flex items-center gap-2.5 group">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cine-gold to-amber-600 flex items-center justify-center text-black text-xl font-black shadow-glow-gold group-hover:scale-105 transition-transform">
+                    <i class="fa-solid fa-film"></i>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-2xl font-extrabold tracking-wider font-heading text-white">CINE<span class="text-cine-gold">WORLD</span></span>
+                    <span class="text-[9px] uppercase tracking-widest text-cine-gray font-semibold -mt-1">Cinematic Universe</span>
+                </div>
+            </a>
+
+            <!-- Search Bar in Header -->
+            <div class="hidden md:flex flex-1 max-w-md mx-6 relative">
+                <input type="text" id="nav-search-input" onkeyup="handleSearch(event)" placeholder="Search movies, actors, directors..." class="w-full bg-cine-dark border border-cine-lightGray focus:border-cine-gold focus:bg-cine-card text-xs text-white rounded-full py-2.5 pl-10 pr-10 outline-none transition-all duration-200">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-cine-gray text-xs"></i>
+                <button onclick="clearSearch()" id="clear-search-btn" class="hidden absolute right-3.5 top-2.5 text-cine-gray hover:text-white text-xs">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="hidden lg:flex items-center gap-7 text-xs font-bold uppercase tracking-wider text-gray-300">
+                <a href="#home" onclick="filterByTab('all')" class="hover:text-cine-gold transition-colors flex items-center gap-1.5"><i class="fa-solid fa-house text-xs"></i> Home</a>
+                <a href="#movies" onclick="filterByTab('all')" class="hover:text-cine-gold transition-colors">Movies</a>
+                <a href="#upcoming" onclick="filterByTab('upcoming')" class="hover:text-cine-gold transition-colors text-amber-400">Upcoming</a>
+                <a href="#top-rated" onclick="filterByTab('top-rated')" class="hover:text-cine-gold transition-colors">Top Rated</a>
+                <a href="#genres-anchor" onclick="scrollToFilter('genre')" class="hover:text-cine-gold transition-colors">Genres</a>
+            </nav>
+
+            <!-- User & Watchlist Controls -->
+            <div class="flex items-center gap-3">
+                <!-- Watchlist Drawer Trigger Button -->
+                <button onclick="toggleWatchlistDrawer(true)" class="relative p-2.5 rounded-full bg-cine-dark hover:bg-cine-lightGray text-white border border-cine-lightGray transition-all flex items-center justify-center group" title="Watchlist">
+                    <i class="fa-solid fa-bookmark text-cine-gold group-hover:scale-110 transition-transform"></i>
+                    <span id="watchlist-badge" class="hidden absolute -top-1 -right-1 bg-cine-red text-white text-[10px] font-extrabold w-5 h-5 rounded-full flex items-center justify-center border-2 border-cine-black animate-pulse">0</span>
+                </button>
+
+                <!-- Auth Modal Button -->
+                <div id="auth-btn-container">
+                    <button onclick="openAuthModal('login')" class="px-5 py-2.5 rounded-full bg-gradient-to-r from-cine-gold to-amber-500 hover:from-amber-400 hover:to-cine-gold text-black text-xs font-extrabold uppercase tracking-wider shadow-glow-gold transition-all">
+                        Sign In
+                    </button>
+                </div>
+
+                <!-- Mobile Navigation Menu Toggle -->
+                <button onclick="toggleMobileMenu()" class="lg:hidden p-2.5 rounded-lg bg-cine-dark border border-cine-lightGray text-white">
+                    <i class="fa-solid fa-bars text-base"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Drawer Navigation -->
+        <div id="mobile-menu" class="hidden lg:hidden border-t border-cine-lightGray bg-cine-dark px-4 py-4 space-y-3">
+            <div class="relative mb-3">
+                <input type="text" onkeyup="handleSearch(event)" placeholder="Search movies..." class="w-full bg-cine-black border border-cine-lightGray text-xs rounded-lg py-2 pl-9 pr-4 text-white">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-cine-gray text-xs"></i>
+            </div>
+            <a href="#home" onclick="toggleMobileMenu(); filterByTab('all');" class="block text-xs font-bold uppercase tracking-wider text-gray-300 py-1.5 hover:text-cine-gold">Home</a>
+            <a href="#movies" onclick="toggleMobileMenu(); filterByTab('all');" class="block text-xs font-bold uppercase tracking-wider text-gray-300 py-1.5 hover:text-cine-gold">All Movies</a>
+            <a href="#upcoming" onclick="toggleMobileMenu(); filterByTab('upcoming');" class="block text-xs font-bold uppercase tracking-wider text-amber-400 py-1.5">Upcoming Movies</a>
+            <a href="#top-rated" onclick="toggleMobileMenu(); filterByTab('top-rated');" class="block text-xs font-bold uppercase tracking-wider text-gray-300 py-1.5 hover:text-cine-gold">Top Rated</a>
+        </div>
+    </header>
+
+    <!-- MAIN APP CONTENT AREA -->
+    <main class="flex-grow">
+        <!-- BROWSE SECTION VIEW (HERO + FILTERS + GRID) -->
+        <div id="browse-view">
+            <!-- HERO CINEMATIC CAROUSEL SHOWCASE -->
+            <section id="home" class="relative bg-cine-black min-h-[550px] lg:min-h-[620px] flex items-center overflow-hidden border-b border-cine-lightGray/40">
+                <!-- Background Image Slider -->
+                <div class="absolute inset-0 z-0">
+                    <img id="hero-bg" src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1600&auto=format&fit=crop&q=80" alt="Hero Movie Backdrop" class="w-full h-full object-cover object-center filter brightness-75 scale-105 transition-all duration-700">
+                    <!-- Vignette Gradients -->
+                    <div class="absolute inset-0 bg-gradient-to-t from-cine-black via-cine-black/60 to-transparent"></div>
+                    <div class="absolute inset-0 bg-gradient-to-r from-cine-black via-cine-black/80 to-transparent"></div>
+                </div>
+
+                <!-- Hero Content Box -->
+                <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24 w-full">
+                    <div class="max-w-2xl space-y-5">
+                        <div class="flex items-center gap-3">
+                            <span class="bg-cine-gold text-black text-[10px] font-black uppercase px-2.5 py-1 rounded-md tracking-wider flex items-center gap-1 shadow-glow-gold">
+                                <i class="fa-solid fa-fire text-black"></i> Featured Blockbuster
+                            </span>
+                            <span id="hero-badge-lang" class="bg-cine-card border border-cine-lightGray text-white text-[10px] font-bold uppercase px-2.5 py-1 rounded-md">Telugu / Pan-India</span>
+                        </div>
+
+                        <h1 id="hero-title" class="text-4xl sm:text-5xl lg:text-6xl font-black font-heading text-white tracking-tight leading-none drop-shadow-lg">
+                            KALKI 2898 AD
+                        </h1>
+
+                        <div class="flex flex-wrap items-center gap-4 text-xs font-semibold text-gray-300">
+                            <span class="flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-cine-gold/30 text-cine-gold font-bold">
+                                <i class="fa-solid fa-star text-cine-gold"></i> <span id="hero-rating">7.6 / 10</span> (IMDb)
+                            </span>
+                            <span id="hero-year" class="bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">2024</span>
+                            <span id="hero-genre" class="bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">Action • Sci-Fi • Mythology</span>
+                            <span id="hero-duration" class="bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/10"><i class="fa-regular fa-clock"></i> 3h 01m</span>
+                        </div>
+
+                        <p id="hero-desc" class="text-sm text-gray-300 leading-relaxed font-normal line-clamp-3 max-w-xl">
+                            When the world is consumed by darkness, a modern avatar of Vishnu descends to protect the unborn child of Sumati from the dystopian supreme ruler Yaskin.
+                        </p>
+
+                        <div class="pt-4 flex flex-wrap items-center gap-4">
+                            <button id="hero-trailer-btn" onclick="openTrailerModal('k15aeeK0bvg')" class="px-7 py-3.5 rounded-full bg-cine-red hover:bg-cine-redHover text-white font-extrabold text-xs uppercase tracking-wider shadow-glow-red transition-all flex items-center gap-2">
+                                <i class="fa-solid fa-play text-xs"></i> Watch Trailer
+                            </button>
+
+                            <button id="hero-explore-btn" onclick="openMovieDetails('m1')" class="px-7 py-3.5 rounded-full bg-cine-card hover:bg-cine-lightGray text-white font-extrabold text-xs uppercase tracking-wider border border-cine-lightGray transition-all flex items-center gap-2">
+                                <i class="fa-solid fa-circle-info text-xs"></i> Explore Movie
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Carousel Slide Dots Indicator -->
+                    <div class="absolute bottom-6 right-6 lg:right-12 flex items-center gap-2 z-20">
+                        <button onclick="setHeroSlide(0)" class="hero-dot w-3 h-3 rounded-full bg-cine-gold transition-all"></button>
+                        <button onclick="setHeroSlide(1)" class="hero-dot w-3 h-3 rounded-full bg-cine-lightGray hover:bg-white transition-all"></button>
+                        <button onclick="setHeroSlide(2)" class="hero-dot w-3 h-3 rounded-full bg-cine-lightGray hover:bg-white transition-all"></button>
+                        <button onclick="setHeroSlide(3)" class="hero-dot w-3 h-3 rounded-full bg-cine-lightGray hover:bg-white transition-all"></button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEARCH, FILTER & SORT CONTROLS -->
+            <section id="genres-anchor" class="py-8 bg-cine-dark border-b border-cine-lightGray/40">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        
+                        <!-- Search & Quick Filter Pills -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button onclick="setTabFilter('all')" id="tab-all" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-cine-gold text-black shadow-glow-gold transition-all">
+                                All Movies
+                            </button>
+                            <button onclick="setTabFilter('popular')" id="tab-popular" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-cine-card text-gray-300 border border-cine-lightGray hover:border-cine-gold transition-all">
+                                Popular
+                            </button>
+                            <button onclick="setTabFilter('top-rated')" id="tab-top-rated" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-cine-card text-gray-300 border border-cine-lightGray hover:border-cine-gold transition-all">
+                                Top Rated
+                            </button>
+                            <button onclick="setTabFilter('upcoming')" id="tab-upcoming" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-cine-card text-amber-400 border border-amber-500/30 hover:border-amber-400 transition-all">
+                                <i class="fa-solid fa-sparkles text-xs mr-1"></i> Upcoming
+                            </button>
+                        </div>
+
+                        <!-- Dropdown Selectors for Detailed Filtering -->
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <!-- Genre Filter -->
+                            <select id="genre-select" onchange="applyFilters()" class="bg-cine-card text-xs font-semibold text-gray-200 border border-cine-lightGray rounded-xl px-3 py-2.5 outline-none focus:border-cine-gold">
+                                <option value="all">All Genres</option>
+                                <option value="Action">Action</option>
+                                <option value="Sci-Fi">Sci-Fi</option>
+                                <option value="Drama">Drama</option>
+                                <option value="Thriller">Thriller</option>
+                                <option value="Fantasy">Fantasy</option>
+                                <option value="Adventure">Adventure</option>
+                            </select>
+
+                            <!-- Language Filter -->
+                            <select id="lang-select" onchange="applyFilters()" class="bg-cine-card text-xs font-semibold text-gray-200 border border-cine-lightGray rounded-xl px-3 py-2.5 outline-none focus:border-cine-gold">
+                                <option value="all">All Languages</option>
+                                <option value="Telugu">Telugu</option>
+                                <option value="Hindi">Hindi</option>
+                                <option value="English">English</option>
+                            </select>
+
+                            <!-- Sort By Filter -->
+                            <select id="sort-select" onchange="applyFilters()" class="bg-cine-card text-xs font-semibold text-gray-200 border border-cine-lightGray rounded-xl px-3 py-2.5 outline-none focus:border-cine-gold col-span-2 sm:col-span-1">
+                                <option value="rating">Sort by Rating</option>
+                                <option value="popularity">Sort by Popularity</option>
+                                <option value="year">Sort by Year</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MOVIES GALLERY GRID -->
+            <section id="movies" class="py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 id="section-heading" class="text-2xl sm:text-3xl font-extrabold font-heading text-white tracking-wide">
+                            EXPLORE MOVIES
+                        </h2>
+                        <p id="section-subheading" class="text-xs text-cine-gray mt-1">Browse top-rated cinema, blockbusters, and trending releases</p>
+                    </div>
+
+                    <span id="movies-count-badge" class="bg-cine-card border border-cine-lightGray text-cine-gold text-xs font-extrabold px-3 py-1.5 rounded-full">
+                        8 Movies
+                    </span>
+                </div>
+
+                <!-- Movies Grid Container -->
+                <div id="movies-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <!-- Cards dynamically rendered via JavaScript -->
+                </div>
+            </section>
+        </div>
+
+        <!-- COMPREHENSIVE MOVIE DETAILS VIEW (SPA MODE) -->
+        <div id="details-view" class="hidden bg-cine-black min-h-screen pb-20">
+            <!-- Back Button Bar -->
+            <div class="bg-cine-dark border-b border-cine-lightGray py-4 px-4 sm:px-8 sticky top-20 z-30 flex items-center justify-between">
+                <button onclick="showSection('browse')" class="inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-cine-gold hover:text-white transition-colors bg-cine-card px-4 py-2 rounded-xl border border-cine-lightGray">
+                    <i class="fa-solid fa-arrow-left"></i> Back to Browse
+                </button>
+                <div class="flex items-center gap-2 text-xs text-gray-400">
+                    <span>CineWorld</span> / <span id="breadcrumb-title" class="text-white font-bold">Kalki 2898 AD</span>
+                </div>
+            </div>
+
+            <!-- Movie Backdrop Banner Header -->
+            <div class="relative h-72 sm:h-96 lg:h-[420px] overflow-hidden">
+                <img id="detail-backdrop" src="" alt="Backdrop" class="w-full h-full object-cover filter brightness-50">
+                <div class="absolute inset-0 bg-gradient-to-t from-cine-black via-cine-black/40 to-transparent"></div>
+            </div>
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-32 sm:-mt-48 relative z-10">
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                    
+                    <!-- Left Column: Poster & Quick Info -->
+                    <div class="space-y-6">
+                        <div class="rounded-2xl overflow-hidden border-2 border-cine-lightGray shadow-card relative group bg-cine-card">
+                            <img id="detail-poster" src="" alt="Poster" class="w-full h-auto object-cover">
+                            <button id="detail-watchlist-btn" onclick="" class="absolute top-4 right-4 bg-cine-black/80 backdrop-blur-md text-cine-gold p-3 rounded-full border border-cine-gold/30 hover:bg-cine-gold hover:text-black transition-all">
+                                <i class="fa-solid fa-bookmark text-base"></i>
+                            </button>
+                        </div>
+
+                        <!-- Info Snapshot Box -->
+                        <div class="bg-cine-card border border-cine-lightGray rounded-2xl p-5 space-y-3 text-xs">
+                            <div class="flex justify-between border-b border-cine-lightGray/60 pb-2">
+                                <span class="text-cine-gray font-semibold">Release Date</span>
+                                <span id="detail-release" class="font-bold text-white">June 27, 2024</span>
+                            </div>
+                            <div class="flex justify-between border-b border-cine-lightGray/60 pb-2">
+                                <span class="text-cine-gray font-semibold">Language</span>
+                                <span id="detail-lang" class="font-bold text-white">Telugu (Pan-India)</span>
+                            </div>
+                            <div class="flex justify-between border-b border-cine-lightGray/60 pb-2">
+                                <span class="text-cine-gray font-semibold">Runtime</span>
+                                <span id="detail-duration" class="font-bold text-white">3 hours 01 min</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-cine-gray font-semibold">Director</span>
+                                <span id="detail-director" class="font-bold text-cine-gold">Nag Ashwin</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Details, Trailer, Cast & Reviews -->
+                    <div class="lg:col-span-3 space-y-10">
+                        
+                        <!-- Header Details -->
+                        <div class="space-y-4">
+                            <div class="flex flex-wrap items-center gap-3">
+                                <span id="detail-rating-badge" class="bg-cine-gold text-black font-extrabold text-sm px-3 py-1 rounded-lg flex items-center gap-1 shadow-glow-gold">
+                                    <i class="fa-solid fa-star"></i> <span id="detail-rating">7.6</span> / 10
+                                </span>
+                                <span id="detail-votes" class="text-xs text-cine-gray font-semibold">(85,000+ Votes)</span>
+                            </div>
+
+                            <h1 id="detail-title" class="text-3xl sm:text-5xl font-black font-heading text-white tracking-wide">
+                                KALKI 2898 AD
+                            </h1>
+
+                            <div id="detail-genres-container" class="flex flex-wrap gap-2 pt-1">
+                                <!-- Genre Badges -->
+                            </div>
+
+                            <p id="detail-plot" class="text-sm sm:text-base text-gray-300 leading-relaxed font-normal pt-2">
+                                Story plot summary...
+                            </p>
+                        </div>
+
+                        <!-- EMBEDDED YOUTUBE TRAILER SECTION -->
+                        <div class="space-y-4 pt-4 border-t border-cine-lightGray">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-xl font-bold font-heading text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-circle-play text-cine-red"></i> Official Trailer
+                                </h3>
+                                <span class="text-xs text-cine-gray">HD 1080p Embed</span>
+                            </div>
+                            
+                            <div class="relative w-full aspect-video rounded-2xl overflow-hidden border border-cine-lightGray bg-black shadow-card">
+                                <iframe id="detail-trailer-iframe" class="w-full h-full" src="" title="YouTube trailer player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                            </div>
+                        </div>
+
+                        <!-- CAST & CREW SECTION -->
+                        <div class="space-y-4 pt-4 border-t border-cine-lightGray">
+                            <h3 class="text-xl font-bold font-heading text-white flex items-center gap-2">
+                                <i class="fa-solid fa-users text-cine-gold"></i> Top Cast & Crew
+                            </h3>
+
+                            <div id="cast-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                <!-- Cast Member Cards -->
+                            </div>
+                        </div>
+
+                        <!-- RATINGS AND REVIEWS SECTION -->
+                        <div class="space-y-6 pt-4 border-t border-cine-lightGray">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div>
+                                    <h3 class="text-xl font-bold font-heading text-white flex items-center gap-2">
+                                        <i class="fa-solid fa-comments text-cine-gold"></i> User Reviews & Ratings
+                                    </h3>
+                                    <p class="text-xs text-cine-gray mt-1">Real audience impressions and star scores</p>
+                                </div>
+                                <span id="review-count-badge" class="text-xs font-bold bg-cine-card border border-cine-lightGray text-white px-3 py-1.5 rounded-full">
+                                    3 Reviews
+                                </span>
+                            </div>
+
+                            <!-- Rating Submission Form -->
+                            <div class="bg-cine-card border border-cine-lightGray rounded-2xl p-5 space-y-4">
+                                <h4 class="text-sm font-bold text-white uppercase tracking-wider">Leave Your Review</h4>
+                                <form id="review-form" onsubmit="submitUserReview(event)" class="space-y-4">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-bold text-gray-400 mb-1">Your Name</label>
+                                            <input type="text" id="review-user-name" required placeholder="e.g. Vikram Sharma" class="w-full text-xs bg-cine-dark border border-cine-lightGray rounded-xl px-4 py-2.5 text-white outline-none focus:border-cine-gold">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-gray-400 mb-1">Rating (1 to 10 Stars)</label>
+                                            <select id="review-user-rating" class="w-full text-xs bg-cine-dark border border-cine-lightGray rounded-xl px-4 py-2.5 text-cine-gold font-bold outline-none focus:border-cine-gold">
+                                                <option value="10">⭐ 10 / 10 - Masterpiece</option>
+                                                <option value="9">⭐ 9 / 10 - Outstanding</option>
+                                                <option value="8" selected>⭐ 8 / 10 - Very Good</option>
+                                                <option value="7">⭐ 7 / 10 - Good</option>
+                                                <option value="6">⭐ 6 / 10 - Decent</option>
+                                                <option value="5">⭐ 5 / 10 - Average</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-400 mb-1">Your Comment / Review</label>
+                                        <textarea id="review-user-text" required rows="3" placeholder="Write your thoughts about the movie plot, acting, visual effects and music..." class="w-full text-xs bg-cine-dark border border-cine-lightGray rounded-xl px-4 py-2.5 text-white outline-none focus:border-cine-gold"></textarea>
+                                    </div>
+                                    <button type="submit" class="px-6 py-2.5 bg-cine-gold hover:bg-cine-goldHover text-black text-xs font-extrabold uppercase tracking-wider rounded-xl shadow-glow-gold transition-all">
+                                        Submit Review
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Existing Reviews Container -->
+                            <div id="reviews-list" class="space-y-4">
+                                <!-- User Review Cards -->
+                            </div>
+                        </div>
+
+                        <!-- RELATED MOVIES SECTION -->
+                        <div class="space-y-4 pt-4 border-t border-cine-lightGray">
+                            <h3 class="text-xl font-bold font-heading text-white flex items-center gap-2">
+                                <i class="fa-solid fa-clapperboard text-cine-gold"></i> You Might Also Like
+                            </h3>
+                            <div id="related-movies-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                <!-- Related Cards -->
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER SECTION -->
+    <footer class="bg-cine-dark text-white border-t border-cine-lightGray/40 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pb-12 border-b border-cine-lightGray/40">
+                <!-- Brand Column -->
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-cine-gold flex items-center justify-center text-black font-black">
+                            <i class="fa-solid fa-film"></i>
+                        </div>
+                        <span class="text-2xl font-extrabold tracking-wider font-heading">CINE<span class="text-cine-gold">WORLD</span></span>
+                    </div>
+                    <p class="text-xs text-cine-gray leading-relaxed">
+                        CineWorld is your premier movie database & cinema information platform bringing authentic reviews, ratings, trailers, cast credits, and release updates.
+                    </p>
+                    <div class="flex items-center gap-3 pt-2">
+                        <a href="javascript:void(0)" onclick="showToast('Social link clicked', 'info')" class="w-8 h-8 rounded-full bg-cine-card border border-cine-lightGray hover:border-cine-gold flex items-center justify-center text-xs text-cine-gray hover:text-cine-gold transition-all"><i class="fa-brands fa-facebook-f"></i></a>
+                        <a href="javascript:void(0)" onclick="showToast('Social link clicked', 'info')" class="w-8 h-8 rounded-full bg-cine-card border border-cine-lightGray hover:border-cine-gold flex items-center justify-center text-xs text-cine-gray hover:text-cine-gold transition-all"><i class="fa-brands fa-twitter"></i></a>
+                        <a href="javascript:void(0)" onclick="showToast('Social link clicked', 'info')" class="w-8 h-8 rounded-full bg-cine-card border border-cine-lightGray hover:border-cine-gold flex items-center justify-center text-xs text-cine-gray hover:text-cine-gold transition-all"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="javascript:void(0)" onclick="showToast('Social link clicked', 'info')" class="w-8 h-8 rounded-full bg-cine-card border border-cine-lightGray hover:border-cine-gold flex items-center justify-center text-xs text-cine-gray hover:text-cine-gold transition-all"><i class="fa-brands fa-youtube"></i></a>
+                    </div>
+                </div>
+
+                <!-- Navigation Quick Links -->
+                <div>
+                    <h4 class="text-xs font-extrabold uppercase tracking-widest text-cine-gold mb-4">Quick Links</h4>
+                    <ul class="space-y-2.5 text-xs text-cine-gray font-medium">
+                        <li><a href="#home" onclick="showSection('browse'); filterByTab('all');" class="hover:text-white transition-colors">Home Page</a></li>
+                        <li><a href="#movies" onclick="showSection('browse'); filterByTab('all');" class="hover:text-white transition-colors">Popular Movies</a></li>
+                        <li><a href="#upcoming" onclick="showSection('browse'); filterByTab('upcoming');" class="hover:text-white transition-colors text-amber-400">Upcoming Cinema</a></li>
+                        <li><a href="#top-rated" onclick="showSection('browse'); filterByTab('top-rated');" class="hover:text-white transition-colors">IMDb Top Rated</a></li>
+                    </ul>
+                </div>
+
+                <!-- Genres -->
+                <div>
+                    <h4 class="text-xs font-extrabold uppercase tracking-widest text-cine-gold mb-4">Top Genres</h4>
+                    <ul class="space-y-2.5 text-xs text-cine-gray font-medium">
+                        <li><a href="javascript:void(0)" onclick="quickFilterGenre('Action')" class="hover:text-white transition-colors">Action & Adventure</a></li>
+                        <li><a href="javascript:void(0)" onclick="quickFilterGenre('Sci-Fi')" class="hover:text-white transition-colors">Sci-Fi & Fantasy</a></li>
+                        <li><a href="javascript:void(0)" onclick="quickFilterGenre('Drama')" class="hover:text-white transition-colors">Drama & Crime</a></li>
+                        <li><a href="javascript:void(0)" onclick="quickFilterGenre('Thriller')" class="hover:text-white transition-colors">Mystery & Thriller</a></li>
+                    </ul>
+                </div>
+
+                <!-- Legal / Info -->
+                <div>
+                    <h4 class="text-xs font-extrabold uppercase tracking-widest text-cine-gold mb-4">Company & Legal</h4>
+                    <ul class="space-y-2.5 text-xs text-cine-gray font-medium">
+                        <li><a href="javascript:void(0)" onclick="openInfoModal('About CineWorld', 'CineWorld is an interactive cinematic portal inspired by IMDb providing rich data on blockbuster movies, cast, crew, and audience reviews.')" class="hover:text-white transition-colors">About Us</a></li>
+                        <li><a href="javascript:void(0)" onclick="openInfoModal('Contact Us', 'Have questions or feedback? Email us at contact@cineworld.com or support@cineworld.com.')" class="hover:text-white transition-colors">Contact Us</a></li>
+                        <li><a href="javascript:void(0)" onclick="openInfoModal('Privacy Policy', 'Your data is strictly encrypted and secure. We respect your browsing privacy.')" class="hover:text-white transition-colors">Privacy Policy</a></li>
+                        <li><a href="javascript:void(0)" onclick="openInfoModal('Terms & Conditions', 'All movie artwork and trademarks belong to their respective production houses.')" class="hover:text-white transition-colors">Terms of Service</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-cine-gray gap-4">
+                <p>&copy; 2026 CineWorld Inc. Inspired by IMDb. All rights reserved.</p>
+                <div class="flex items-center gap-2">
+                    <span>Crafted for true cinema fans</span>
+                    <i class="fa-solid fa-heart text-cine-red"></i>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- WATCHLIST DRAWER MODAL -->
+    <div id="watchlist-drawer" class="fixed inset-0 z-50 overflow-hidden hidden" role="dialog" aria-modal="true">
+        <div id="watchlist-backdrop" onclick="toggleWatchlistDrawer(false)" class="fixed inset-0 bg-black/70 backdrop-blur-sm opacity-0 transition-opacity"></div>
+        <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
+            <div class="w-screen max-w-md bg-cine-dark border-l border-cine-lightGray flex flex-col justify-between shadow-2xl">
+                <!-- Header -->
+                <div class="p-6 border-b border-cine-lightGray flex items-center justify-between bg-cine-black">
+                    <div class="flex items-center gap-2 text-cine-gold">
+                        <i class="fa-solid fa-bookmark text-lg"></i>
+                        <h3 class="text-base font-bold font-heading text-white">Your CineWatchlist</h3>
+                    </div>
+                    <button onclick="toggleWatchlistDrawer(false)" class="text-gray-400 hover:text-white p-2">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <!-- Items Container -->
+                <div id="watchlist-items-container" class="flex-1 overflow-y-auto p-6 space-y-4">
+                    <!-- Watchlist Cards -->
+                </div>
+
+                <!-- Footer -->
+                <div class="p-6 border-t border-cine-lightGray bg-cine-black">
+                    <button onclick="toggleWatchlistDrawer(false)" class="w-full py-3 bg-cine-gold text-black font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-glow-gold">
+                        Continue Browsing
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TRAILER EMBED MODAL -->
+    <div id="trailer-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md hidden">
+        <div class="relative w-full max-w-4xl bg-cine-black border border-cine-lightGray rounded-2xl overflow-hidden shadow-2xl">
+            <button onclick="closeTrailerModal()" class="absolute top-4 right-4 z-10 bg-black/80 text-white hover:text-cine-gold p-2 rounded-full border border-white/20">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <div class="aspect-video w-full">
+                <iframe id="trailer-modal-iframe" class="w-full h-full" src="" title="YouTube Video Player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUTHENTICATION MODAL -->
+    <div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden">
+        <div class="bg-cine-dark border border-cine-lightGray rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative">
+            <button onclick="closeAuthModal()" class="absolute top-5 right-5 text-gray-400 hover:text-white p-1">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="flex border-b border-cine-lightGray mb-6">
+                <button onclick="switchAuthTab('login')" id="tab-login" class="flex-1 pb-3 text-center text-xs font-extrabold uppercase tracking-wider border-b-2 border-cine-gold text-cine-gold">Sign In</button>
+                <button onclick="switchAuthTab('signup')" id="tab-signup" class="flex-1 pb-3 text-center text-xs font-extrabold uppercase tracking-wider border-b-2 border-transparent text-gray-400">Register</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 mb-1">Email / Phone</label>
+                    <input type="text" required placeholder="Enter email address" class="w-full text-xs bg-cine-black border border-cine-lightGray rounded-xl px-4 py-3 text-white outline-none focus:border-cine-gold">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 mb-1">Password</label>
+                    <input type="password" required placeholder="Enter password" class="w-full text-xs bg-cine-black border border-cine-lightGray rounded-xl px-4 py-3 text-white outline-none focus:border-cine-gold">
+                </div>
+                <button type="submit" class="w-full py-3.5 bg-cine-gold hover:bg-cine-goldHover text-black font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-glow-gold transition-all">
+                    Sign In to CineWorld
+                </button>
+            </form>
+
+            <!-- Signup Form -->
+            <form id="signup-form" onsubmit="handleAuthSubmit(event)" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 mb-1">Full Name</label>
+                    <input type="text" id="signup-name-input" required placeholder="e.g. Rahul Sharma" class="w-full text-xs bg-cine-black border border-cine-lightGray rounded-xl px-4 py-3 text-white outline-none focus:border-cine-gold">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 mb-1">Email Address</label>
+                    <input type="email" required placeholder="name@domain.com" class="w-full text-xs bg-cine-black border border-cine-lightGray rounded-xl px-4 py-3 text-white outline-none focus:border-cine-gold">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 mb-1">Create Password</label>
+                    <input type="password" required placeholder="Minimum 6 characters" class="w-full text-xs bg-cine-black border border-cine-lightGray rounded-xl px-4 py-3 text-white outline-none focus:border-cine-gold">
+                </div>
+                <button type="submit" class="w-full py-3.5 bg-cine-gold hover:bg-cine-goldHover text-black font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-glow-gold transition-all">
+                    Create Account
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- GENERAL INFO MODAL -->
+    <div id="info-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden">
+        <div class="bg-cine-dark border border-cine-lightGray rounded-3xl max-w-md w-full p-6 shadow-2xl relative">
+            <button onclick="closeInfoModal()" class="absolute top-5 right-5 text-gray-400 hover:text-white p-1">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <h3 id="info-modal-title" class="text-lg font-bold font-heading text-cine-gold mb-3">Info</h3>
+            <p id="info-modal-content" class="text-xs text-gray-300 leading-relaxed mb-6"></p>
+            <button onclick="closeInfoModal()" class="w-full py-2.5 bg-cine-gold text-black font-extrabold text-xs uppercase tracking-wider rounded-xl">Close</button>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APPLICATION LOGIC -->
+    <script>
+        // DATABASE OF CINEMATIC MOVIES
+        const moviesData = [
+            {
+                id: 'm1',
+                title: 'Kalki 2898 AD',
+                year: 2024,
+                rating: 7.6,
+                votes: '85,000+',
+                duration: '3h 01m',
+                lang: 'Telugu',
+                category: 'popular',
+                genres: ['Action', 'Sci-Fi', 'Fantasy'],
+                director: 'Nag Ashwin',
+                releaseDate: 'June 27, 2024',
+                desc: 'When the world is consumed by darkness, a modern avatar of Vishnu descends to protect the unborn child of Sumati from the dystopian supreme ruler Yaskin.',
+                plot: 'Set in a post-apocalyptic world in 2898 AD, the movie weaves Hindu mythology with futuristic sci-fi. Bhairava, a bounty hunter in Kasi, embarks on a high-stakes mission while Ashwatthama fulfills a ancient oath to protect SUM-80, carrying the divine Kalki child.',
+                poster: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600&auto=format&fit=crop&q=80',
+                backdrop: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1600&auto=format&fit=crop&q=80',
+                youtubeId: 'k15aeeK0bvg',
+                cast: [
+                    { name: 'Prabhas', role: 'Bhairava / Karna', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&fit=crop&q=80' },
+                    { name: 'Amitabh Bachchan', role: 'Ashwatthama', img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&fit=crop&q=80' },
+                    { name: 'Kamal Haasan', role: 'Supreme Yaskin', img: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&fit=crop&q=80' },
+                    { name: 'Deepika Padukone', role: 'SUM-80', img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&fit=crop&q=80' }
+                ],
+                reviews: [
+                    { name: 'Siddharth R.', rating: 9, comment: 'Mindblowing visual effects and Mahabharata connection! Nag Ashwin created magic.' },
+                    { name: 'Ananya M.', rating: 8, comment: 'Prabhas and Amitabh Bachchan screen presence is unbelievable. Must watch in IMAX!' }
+                ]
+            },
+            {
+                id: 'm2',
+                title: 'RRR',
+                year: 2022,
+                rating: 7.8,
+                votes: '160,000+',
+                duration: '3h 07m',
+                lang: 'Telugu',
+                category: 'top-rated',
+                genres: ['Action', 'Drama', 'Adventure'],
+                director: 'S.S. Rajamouli',
+                releaseDate: 'March 25, 2022',
+                desc: 'A fictitious story about two legendary revolutionaries and their journey away from home before they started fighting for their country in the 1920s.',
+                plot: 'Set in pre-independence British India, revolutionary Komaram Bheem disguises himself to rescue a abducted tribal girl, forging a deep brotherhood with Alluri Sitarama Raju, an ambitious officer working for the British Empire.',
+                poster: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
+                backdrop: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1600&auto=format&fit=crop&q=80',
+                youtubeId: 'f_vbAtFSEc0',
+                cast: [
+                    { name: 'N.T. Rama Rao Jr.', role: 'Komaram Bheem', img: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&fit=crop&q=80' },
+                    { name: 'Ram Charan', role: 'Alluri Sitarama Raju', img: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&fit=crop&q=80' },
+                    { name: 'Alia Bhatt', role: 'Sita', img: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200&fit=crop&q=80' },
+                    { name: 'Ajay Devgn', role: 'Venkata Rama Raju', img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&fit=crop&q=80' }
+                ],
+                reviews: [
+                    { name: 'Karthik K.', rating: 10, comment: 'Oscar-winning energy! The tiger introduction scene and Naatu Naatu are immortal.' }
+                ]
+            },
+            {
+                id: 'm3',
+                title: 'Baahubali 2: The Conclusion',
+                year: 2017,
+                rating: 8.2,
+                votes: '110,000+',
+                duration: '2h 47m',
+                lang: 'Telugu',
+                category: 'top-rated',
+                genres: ['Action', 'Fantasy', 'Adventure'],
+                director: 'S.S. Rajamouli',
+                releaseDate: 'April 28, 2017',
+                desc: 'When Shiva, the son of Bahubali, learns about his heritage, he begins to look for answers. His story is juxtaposed with past events that unfolded in the Mahishmati Kingdom.',
+                plot: 'Mahendra Baahubali learns the truth about the tragic betrayal and execution of his heroic father Amarendra Baahubali by Kattappa under Bhallaladeva order, prompting him to wage war and reclaim Mahishmati.',
+                poster: 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=600&auto=format&fit=crop&q=80',
+                backdrop: 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=1600&auto=format&fit=crop&q=80',
+                youtubeId: 'qD-6d8Wo3do',
+                cast: [
+                    { name: 'Prabhas', role: 'Amarendra Baahubali', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&fit=crop&q=80' },
+                    { name: 'Rana Daggubati', role: 'Bhallaladeva', img: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&fit=crop&q=80' },
+                    { name: 'Anushka Shetty', role: 'Devasena', img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&fit=crop&q=80' },
+                    { name: 'Tamannaah', role: 'Avanthika', img: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200&fit=crop&q=80' }
+                ],
+                reviews: [
+                    { name: 'Rohan P.', rating: 10, comment: 'The pinnacle of Indian cinema. Why Kattappa killed Baahubali lived up to 2 years of hype!' }
+                ]
+            },
+            {
+                id: 'm4',
+                title: 'Pushpa 2: The Rule',
+                year: 2024,
+                rating: 8.1,
+                votes: '92,000+',
+                duration: '3h 10m',
+                lang: 'Telugu',
+                category: 'popular',
+                genres: ['Action', 'Thriller', 'Drama'],
+                director: 'Sukumar',
+                releaseDate: 'December 5, 2024',
+                desc: 'The clash between Pushpa Raj and Bhanwar Singh Shekhawat escalates into an all-out battle for supremacy in red sandalwood smuggling.',
+                plot: 'Pushpa Raj expands his global empire across international borders while defending his reign against relentless police commander Shekhawat and rival syndicate lords.',
+                poster: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=600&auto=format&fit=crop&q=80',
+                backdrop: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=1600&auto=format&fit=crop&q=80',
+                youtubeId: '1kVK0MZlbI4',
+                cast: [
+                    { name: 'Allu Arjun', role: 'Pushpa Raj', img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&fit=crop&q=80' },
+                    { name: 'Rashmika Mandanna', role: 'Srivalli', img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&fit=crop&q=80' },
+                    { name: 'Fahadh Faasil', role: 'Bhanwar Singh Shekhawat', img: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&fit=crop&q=80' }
+                ],
+                reviews: [
+                    { name: 'Vijay S.', rating: 9, comment: 'Allu Arjun national award level performance once again! Swag overloaded.' }
+                ]
+            },
+            {
+                id: 'm5',
+                title: 'Salaar: Part 1 – Ceasefire',
+                year: 2023,
+                rating: 6.6,
+                votes: '75,000+',
+                duration: '2h 55m',
+                lang: 'Telugu',
+                category: 'popular',
+                genres: ['Action', 'Thriller', 'Drama'],
+                director: 'Prashanth Neel',
+                releaseDate: 'December 22, 2023',
+                desc: 'A gang leader makes a promise to a dying friend and takes on other criminal gangs in Khansaar.',
+                plot: 'In the walled city-state of Khansaar, Prince Varadha turns to his childhood friend Deva (Salaar)—a monster in battle—to reclaim the throne amidst violent political coups.',
+                poster: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&auto=format&fit=crop&q=80',
+                backdrop: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1600&auto=format&fit=crop&q=80',
+                youtubeId: 'HihakYi503w',
+                cast: [
+                    { name: 'Prabhas', role: 'Deva / Salaar', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&fit=crop&q=80' },
+                    { name: 'Prithviraj Sukumaran', role: 'Varadha Raja Mannaar', img: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&fit=crop&q=80' },
+                    { name: 'Shruti Haasan', role: 'Aadhya', img: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200&fit=crop&q=80' }
+                ],
+                reviews: [
+                    { name: 'Manish T.', rating: 8, comment: 'Heavy action and dark world-building by Prashanth Neel. Interval bang is crazy!' }
+                ]
+            },
+            {
+                id: 'm6',
+                title: 'Devara: Part 1',
+                year: 2024,
+                rating: 6.8,
+                votes: '50,000+',
+                duration: '2h 58m',
+                lang: 'Telugu',
+                category: 'popular',
+                genres: ['Action', 'Drama', 'Adventure'],
+                director: 'Koratala Siva',
+                releaseDate: 'September 27, 2024',
+                desc: 'An epic action saga set against coastal lands where a fearless chieftain protects his people from dangerous sea smugglers.',
+                plot: 'Devara stands up against illegal sea weapon smuggling in his coastal village. Years later, his timid son Vara must step up to honor his father legacy.',
+                poster: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=600&auto=format&fit=crop&q=80',
+                backdrop: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=1600&auto=format&fit=crop&q=80',
+                youtubeId: 'g-9_F9eD1R8',
+                cast: [
+                    { name: 'N.T. Rama Rao Jr.', role: 'Devara / Vara', img: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&fit=crop&q=80' },
+                    { name: 'Janhvi Kapoor', role: 'Thangam', img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&fit=crop&q=80' },
+                    { name: 'Saif Ali Khan', role: 'Bhaira', img: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&fit=crop&q=80' }
+                ],
+                reviews: [
+                    { name: 'Devendra K.', rating: 7, comment: 'NTR double role is terrifyingly good! Anirudh background score steals the show.' }
+                ]
+            },
+            {
+                id: 'm7',
+                title: 'Avengers: Endgame',
+                year: 2019,
+                rating: 8.4,
+                votes: '1,200,000+',
+                duration: '3h 01m',
+                lang: 'English',
+                category: 'top-rated',
+                genres: ['Action', 'Sci-Fi', 'Adventure'],
+                director: 'Anthony & Joe Russo',
+                releaseDate: 'April 26, 2019',
+                desc: 'After the devastating events of Infinity War, the universe is in ruins. With the help of remaining allies, the Avengers assemble once more to reverse Thanos actions.',
+                plot: 'The surviving Avengers execute a time heist through the Quantum Realm to gather all six Infinity Stones from the past and resurrect half of all life destroyed by Thanos.',
+                poster: 'https://images.unsplash.com/photo-1568832359672-e36cf5d74f54?w=600&auto=format&fit=crop&q=80',
+                backdrop: 'https://images.unsplash.com/photo-1568832359672-e36cf5d74f54?w=1600&auto=format&fit=crop&q=80',
+                youtubeId: 'TcMBFSGVi1c',
+                cast: [
+                    { name: 'Robert Downey Jr.', role: 'Tony Stark / Iron Man', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&fit=crop&q=80' },
+                    { name: 'Chris Evans', role: 'Steve Rogers / Captain America', img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&fit=crop&q=80' },
+                    { name: 'Chris Hemsworth', role: 'Thor', img: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&fit=crop&q=80' },
+                    { name: 'Scarlett Johansson', role: 'Natasha Romanoff', img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&fit=crop&q=80' }
+                ],
+                reviews: [
+                    { name: 'Chris M.', rating: 10, comment: 'Avengers Assemble scene gave me chills for a lifetime. Perfect culmination of 11 years.' }
+                ]
+            },
+            {
+                id: 'm8',
+                title: 'Spider-Man: No Way Home',
+                year: 2021,
+                rating: 8.2,
+                votes: '850,000+',
+                duration: '2h 28m',
+                lang: 'English',
+                category: 'top-rated',
+                genres: ['Action', 'Sci-Fi', 'Adventure'],
+                director: 'Jon Watts',
+                releaseDate: 'December 17, 2021',
+                desc: 'With Spider-Man identity now revealed, Peter asks Doctor Strange for help. When a spell goes wrong, dangerous foes from other worlds start to appear.',
+                plot: 'Peter Parker attempts to make the world forget his secret identity, accidentally fracturing the multiverse and bringing iconic villains and past Spider-Men into the MCU.',
+                poster: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=600&auto=format&fit=crop&q=80',
+                backdrop: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=1600&auto=format&fit=crop&q=80',
+                youtubeId: 'JfVOs4VSpmA',
+                cast: [
+                    { name: 'Tom Holland', role: 'Peter Parker / Spider-Man', img: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&fit=crop&q=80' },
+                    { name: 'Zendaya', role: 'MJ', img: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200&fit=crop&q=80' },
+                    { name: 'Benedict Cumberbatch', role: 'Doctor Strange', img: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&fit=crop&q=80' }
+                ],
+                reviews: [
+                    { name: 'David L.', rating: 9, comment: 'Seeing Tobey, Andrew, and Tom together was pure cinema magic!' }
+                ]
+            },
+            {
+                id: 'm9',
+                title: 'Spirit',
+                year: 2025,
+                rating: 9.0,
+                votes: 'Upcoming',
+                duration: 'TBA',
+                lang: 'Telugu',
+                category: 'upcoming',
+                genres: ['Action', 'Crime', 'Thriller'],
+                director: 'Sandeep Reddy Vanga',
+                releaseDate: 'Late 2025',
+                desc: 'Prabhas plays a ruthless, fiercely honest police officer in Sandeep Reddy Vanga high-voltage action thriller.',
+                plot: 'An intense cop drama exploring law enforcement, moral grey zones, and explosive action sequences crafted by Animal director Sandeep Reddy Vanga.',
+                poster: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=600&auto=format&fit=crop&q=80',
+                backdrop: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=1600&auto=format&fit=crop&q=80',
+                youtubeId: 'k15aeeK0bvg',
+                cast: [
+                    { name: 'Prabhas', role: 'ACP Vikram', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&fit=crop&q=80' },
+                    { name: 'Trisha Krishnan', role: 'Lead Female', img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&fit=crop&q=80' }
+                ],
+                reviews: []
+            },
+            {
+                id: 'm10',
+                title: 'SSMB29 / Varanasi',
+                year: 2026,
+                rating: 9.2,
+                votes: 'Upcoming',
+                duration: 'TBA',
+                lang: 'Telugu',
+                category: 'upcoming',
+                genres: ['Adventure', 'Action', 'Fantasy'],
+                director: 'S.S. Rajamouli',
+                releaseDate: '2026',
+                desc: 'Globetrotting jungle adventure spectacle starring Mahesh Babu, directed by S.S. Rajamouli.',
+                plot: 'An Indiana Jones style African jungle adventure featuring ancient Indian heritage, deep action set-pieces, and global scale.',
+                poster: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
+                backdrop: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1600&auto=format&fit=crop&q=80',
+                youtubeId: 'f_vbAtFSEc0',
+                cast: [
+                    { name: 'Mahesh Babu', role: 'Explorer', img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&fit=crop&q=80' },
+                    { name: 'Priyanka Chopra', role: 'Co-lead', img: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200&fit=crop&q=80' }
+                ],
+                reviews: []
+            }
+        ];
+
+        // APP STATE
+        let activeTab = 'all';
+        let selectedGenre = 'all';
+        let selectedLang = 'all';
+        let selectedSort = 'rating';
+        let searchQuery = '';
+        let watchlist = [];
+        let currentSlideIndex = 0;
+        let activeMovieId = 'm1';
+
+        // INITIALIZATION
+        document.addEventListener('DOMContentLoaded', () => {
+            renderMovies();
+            initHeroCarousel();
+            updateWatchlistUI();
+        });
+
+        // HERO CAROUSEL LOGIC
+        function initHeroCarousel() {
+            setHeroSlide(0);
+            setInterval(() => {
+                currentSlideIndex = (currentSlideIndex + 1) % 4;
+                setHeroSlide(currentSlideIndex);
+            }, 6000);
+        }
+
+        function setHeroSlide(index) {
+            currentSlideIndex = index;
+            const featuredMovies = moviesData.slice(0, 4);
+            const movie = featuredMovies[index];
+            if (!movie) return;
+
+            document.getElementById('hero-bg').src = movie.backdrop;
+            document.getElementById('hero-title').innerText = movie.title;
+            document.getElementById('hero-rating').innerText = `${movie.rating} / 10`;
+            document.getElementById('hero-year').innerText = movie.year;
+            document.getElementById('hero-genre').innerText = movie.genres.join(' • ');
+            document.getElementById('hero-duration').innerText = movie.duration;
+            document.getElementById('hero-desc').innerText = movie.desc;
+            document.getElementById('hero-badge-lang').innerText = movie.lang;
+
+            document.getElementById('hero-trailer-btn').setAttribute('onclick', `openTrailerModal('${movie.youtubeId}')`);
+            document.getElementById('hero-explore-btn').setAttribute('onclick', `openMovieDetails('${movie.id}')`);
+
+            // Update Slide Dots
+            const dots = document.querySelectorAll('.hero-dot');
+            dots.forEach((dot, i) => {
+                if (i === index) {
+                    dot.className = 'hero-dot w-3 h-3 rounded-full bg-cine-gold transition-all shadow-glow-gold';
+                } else {
+                    dot.className = 'hero-dot w-3 h-3 rounded-full bg-cine-lightGray hover:bg-white transition-all';
+                }
+            });
+        }
+
+        // RENDER MOVIES GRID
+        function renderMovies() {
+            const grid = document.getElementById('movies-grid');
+            let filtered = [...moviesData];
+
+            // Filter by Tab
+            if (activeTab === 'popular') {
+                filtered = filtered.filter(m => m.category === 'popular');
+            } else if (activeTab === 'top-rated') {
+                filtered = filtered.filter(m => m.rating >= 7.8);
+            } else if (activeTab === 'upcoming') {
+                filtered = filtered.filter(m => m.category === 'upcoming');
+            }
+
+            // Filter by Genre
+            if (selectedGenre !== 'all') {
+                filtered = filtered.filter(m => m.genres.includes(selectedGenre));
+            }
+
+            // Filter by Language
+            if (selectedLang !== 'all') {
+                filtered = filtered.filter(m => m.lang === selectedLang);
+            }
+
+            // Filter by Search Query
+            if (searchQuery) {
+                const q = searchQuery.toLowerCase();
+                filtered = filtered.filter(m => 
+                    m.title.toLowerCase().includes(q) || 
+                    m.director.toLowerCase().includes(q) ||
+                    m.genres.some(g => g.toLowerCase().includes(q))
+                );
+            }
+
+            // Sorting
+            if (selectedSort === 'rating') {
+                filtered.sort((a, b) => b.rating - a.rating);
+            } else if (selectedSort === 'popularity') {
+                filtered.sort((a, b) => b.year - a.year);
+            } else if (selectedSort === 'year') {
+                filtered.sort((a, b) => b.year - a.year);
+            }
+
+            document.getElementById('movies-count-badge').innerText = `${filtered.length} Movies`;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full py-16 text-center text-cine-gray space-y-3">
+                        <i class="fa-solid fa-film text-4xl text-cine-lightGray"></i>
+                        <p class="text-sm font-bold text-gray-400">No movies found matching your filters.</p>
+                        <button onclick="resetAllFilters()" class="text-xs text-cine-gold font-bold underline">Reset Filters</button>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(movie => {
+                const isWatchlisted = watchlist.includes(movie.id);
+
+                return `
+                    <div class="bg-cine-card rounded-2xl overflow-hidden border border-cine-lightGray/60 shadow-card hover:shadow-glow-gold hover:border-cine-gold/50 transition-all duration-300 group flex flex-col justify-between">
+                        <div>
+                            <!-- Poster Image Container -->
+                            <div class="relative h-80 overflow-hidden bg-cine-dark">
+                                <img src="${movie.poster}" alt="${movie.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                                
+                                <div class="absolute inset-0 bg-gradient-to-t from-cine-card via-transparent to-transparent"></div>
+
+                                <!-- Rating Badge -->
+                                <div class="absolute top-3 left-3 bg-black/80 backdrop-blur-md border border-cine-gold/30 text-cine-gold text-xs font-black px-2.5 py-1 rounded-lg flex items-center gap-1 shadow">
+                                    <i class="fa-solid fa-star text-cine-gold text-[10px]"></i> ${movie.rating}
+                                </div>
+
+                                <!-- Watchlist Toggle Button -->
+                                <button onclick="toggleWatchlist(event, '${movie.id}')" class="absolute top-3 right-3 w-9 h-9 rounded-full ${isWatchlisted ? 'bg-cine-gold text-black' : 'bg-black/70 text-white hover:bg-cine-gold hover:text-black'} backdrop-blur-md flex items-center justify-center transition-all border border-white/20">
+                                    <i class="fa-solid fa-bookmark text-xs"></i>
+                                </button>
+                            </div>
+
+                            <!-- Content -->
+                            <div class="p-4 space-y-2">
+                                <div class="flex items-center justify-between text-[11px] text-cine-gray font-semibold">
+                                    <span>${movie.year}</span>
+                                    <span class="text-amber-400">${movie.lang}</span>
+                                </div>
+
+                                <h3 class="font-bold text-base text-white group-hover:text-cine-gold transition-colors line-clamp-1">${movie.title}</h3>
+                                
+                                <p class="text-xs text-gray-400 line-clamp-2 leading-relaxed">${movie.desc}</p>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="p-4 pt-0 flex items-center gap-2">
+                            <button onclick="openMovieDetails('${movie.id}')" class="flex-1 py-2.5 rounded-xl bg-cine-dark hover:bg-cine-gold hover:text-black text-white text-xs font-bold uppercase tracking-wider border border-cine-lightGray transition-all flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-eye text-xs"></i> View Details
+                            </button>
+                            <button onclick="openTrailerModal('${movie.youtubeId}')" class="p-2.5 rounded-xl bg-cine-red/20 text-cine-red hover:bg-cine-red hover:text-white transition-all" title="Watch Trailer">
+                                <i class="fa-solid fa-play text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // MOVIE DETAILS SPA VIEW
+        function openMovieDetails(movieId) {
+            activeMovieId = movieId;
+            const movie = moviesData.find(m => m.id === movieId);
+            if (!movie) return;
+
+            document.getElementById('breadcrumb-title').innerText = movie.title;
+            document.getElementById('detail-backdrop').src = movie.backdrop;
+            document.getElementById('detail-poster').src = movie.poster;
+            document.getElementById('detail-title').innerText = movie.title;
+            document.getElementById('detail-rating').innerText = movie.rating;
+            document.getElementById('detail-votes').innerText = `(${movie.votes} Votes)`;
+            document.getElementById('detail-release').innerText = movie.releaseDate;
+            document.getElementById('detail-lang').innerText = movie.lang;
+            document.getElementById('detail-duration').innerText = movie.duration;
+            document.getElementById('detail-director').innerText = movie.director;
+            document.getElementById('detail-plot').innerText = movie.plot;
+
+            // Genres Badges
+            const genreContainer = document.getElementById('detail-genres-container');
+            genreContainer.innerHTML = movie.genres.map(g => `
+                <span class="bg-cine-card border border-cine-lightGray text-cine-gold text-xs font-bold px-3 py-1 rounded-full">${g}</span>
+            `).join('');
+
+            // Embedded YouTube Trailer iframe
+            const trailerIframe = document.getElementById('detail-trailer-iframe');
+            trailerIframe.src = `https://www.youtube.com/embed/${movie.youtubeId}?autoplay=0&rel=0`;
+
+            // Watchlist Button State
+            const isWatchlisted = watchlist.includes(movie.id);
+            const wBtn = document.getElementById('detail-watchlist-btn');
+            wBtn.className = `absolute top-4 right-4 ${isWatchlisted ? 'bg-cine-gold text-black' : 'bg-cine-black/80 text-cine-gold hover:bg-cine-gold hover:text-black'} backdrop-blur-md p-3 rounded-full border border-cine-gold/30 transition-all`;
+            wBtn.setAttribute('onclick', `toggleWatchlist(event, '${movie.id}')`);
+
+            // Cast Grid
+            const castGrid = document.getElementById('cast-grid');
+            castGrid.innerHTML = movie.cast.map(c => `
+                <div class="bg-cine-card rounded-xl p-3 border border-cine-lightGray text-center space-y-2">
+                    <img src="${c.img}" alt="${c.name}" class="w-16 h-16 object-cover rounded-full mx-auto border-2 border-cine-gold">
+                    <div>
+                        <h4 class="text-xs font-bold text-white line-clamp-1">${c.name}</h4>
+                        <p class="text-[10px] text-cine-gray line-clamp-1">${c.role}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            // Render Reviews
+            renderReviewsList(movie);
+
+            // Related Movies
+            const relatedGrid = document.getElementById('related-movies-grid');
+            const related = moviesData.filter(m => m.id !== movie.id).slice(0, 4);
+            relatedGrid.innerHTML = related.map(rel => `
+                <div class="bg-cine-card rounded-xl overflow-hidden border border-cine-lightGray group cursor-pointer" onclick="openMovieDetails('${rel.id}')">
+                    <img src="${rel.poster}" alt="${rel.title}" class="w-full h-36 object-cover group-hover:scale-105 transition-transform">
+                    <div class="p-2.5">
+                        <h5 class="text-xs font-bold text-white line-clamp-1 group-hover:text-cine-gold">${rel.title}</h5>
+                        <div class="flex items-center justify-between text-[10px] text-cine-gray mt-1">
+                            <span class="text-cine-gold font-bold"><i class="fa-solid fa-star text-[9px]"></i> ${rel.rating}</span>
+                            <span>${rel.year}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Switch to Details View
+            showSection('details');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderReviewsList(movie) {
+            const list = document.getElementById('reviews-list');
+            document.getElementById('review-count-badge').innerText = `${movie.reviews.length} Reviews`;
+
+            if (movie.reviews.length === 0) {
+                list.innerHTML = `<div class="text-xs text-cine-gray py-4">No reviews yet. Be the first to rate this movie!</div>`;
+                return;
+            }
+
+            list.innerHTML = movie.reviews.map(rev => `
+                <div class="bg-cine-card border border-cine-lightGray/60 rounded-xl p-4 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <div class="w-7 h-7 rounded-full bg-cine-gold text-black font-extrabold text-xs flex items-center justify-center">
+                                ${rev.name.charAt(0)}
+                            </div>
+                            <span class="text-xs font-bold text-white">${rev.name}</span>
+                        </div>
+                        <span class="text-xs font-bold text-cine-gold bg-black/40 px-2.5 py-1 rounded-md border border-cine-gold/20">
+                            ⭐ ${rev.rating} / 10
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-300 leading-relaxed">${rev.comment}</p>
+                </div>
+            `).join('');
+        }
+
+        function submitUserReview(event) {
+            event.preventDefault();
+            const movie = moviesData.find(m => m.id === activeMovieId);
+            if (!movie) return;
+
+            const name = document.getElementById('review-user-name').value;
+            const rating = parseInt(document.getElementById('review-user-rating').value);
+            const text = document.getElementById('review-user-text').value;
+
+            movie.reviews.unshift({ name, rating, comment: text });
+            
+            // Recalculate Average Rating
+            const totalSum = movie.reviews.reduce((s, r) => s + r.rating, 0);
+            movie.rating = (totalSum / movie.reviews.length).toFixed(1);
+
+            document.getElementById('detail-rating').innerText = movie.rating;
+            renderReviewsList(movie);
+            renderMovies(); // Update main grid too
+
+            document.getElementById('review-form').reset();
+            showToast('Review submitted successfully!', 'success');
+        }
+
+        // VIEW TOGGLE LOGIC
+        function showSection(section) {
+            const browseView = document.getElementById('browse-view');
+            const detailsView = document.getElementById('details-view');
+
+            if (section === 'browse') {
+                browseView.classList.remove('hidden');
+                detailsView.classList.add('hidden');
+                // Stop iframe video
+                document.getElementById('detail-trailer-iframe').src = '';
+            } else if (section === 'details') {
+                browseView.classList.add('hidden');
+                detailsView.classList.remove('hidden');
+            }
+        }
+
+        // WATCHLIST LOGIC
+        function toggleWatchlist(event, movieId) {
+            event.stopPropagation();
+            const index = watchlist.indexOf(movieId);
+            const movie = moviesData.find(m => m.id === movieId);
+
+            if (index > -1) {
+                watchlist.splice(index, 1);
+                showToast(`Removed "${movie?.title}" from Watchlist`, 'info');
+            } else {
+                watchlist.push(movieId);
+                showToast(`Added "${movie?.title}" to Watchlist`, 'success');
+            }
+
+            updateWatchlistUI();
+            renderMovies();
+            if (activeMovieId === movieId) {
+                openMovieDetails(movieId);
+            }
+        }
+
+        function updateWatchlistUI() {
+            const badge = document.getElementById('watchlist-badge');
+            if (watchlist.length > 0) {
+                badge.innerText = watchlist.length;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            const container = document.getElementById('watchlist-items-container');
+            if (watchlist.length === 0) {
+                container.innerHTML = `
+                    <div class="h-full flex flex-col items-center justify-center text-center p-6 text-cine-gray space-y-3">
+                        <i class="fa-solid fa-bookmark text-4xl text-cine-lightGray"></i>
+                        <p class="text-xs font-bold text-gray-400">Your CineWatchlist is empty</p>
+                        <p class="text-[11px] text-cine-gray">Bookmark movies to watch later!</p>
+                    </div>
+                `;
+            } else {
+                const list = moviesData.filter(m => watchlist.includes(m.id));
+                container.innerHTML = list.map(item => `
+                    <div class="flex items-center gap-3 p-3 bg-cine-card rounded-xl border border-cine-lightGray">
+                        <img src="${item.poster}" alt="${item.title}" class="w-12 h-16 object-cover rounded-lg">
+                        <div class="flex-1">
+                            <h4 class="text-xs font-bold text-white line-clamp-1">${item.title}</h4>
+                            <span class="text-[11px] font-bold text-cine-gold">⭐ ${item.rating} / 10</span>
+                        </div>
+                        <button onclick="toggleWatchlist(event, '${item.id}')" class="text-gray-400 hover:text-cine-red p-2">
+                            <i class="fa-solid fa-trash text-xs"></i>
+                        </button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function toggleWatchlistDrawer(open) {
+            const drawer = document.getElementById('watchlist-drawer');
+            const backdrop = document.getElementById('watchlist-backdrop');
+            if (open) {
+                drawer.classList.remove('hidden');
+                setTimeout(() => backdrop.classList.add('opacity-100'), 10);
+            } else {
+                backdrop.classList.remove('opacity-100');
+                setTimeout(() => drawer.classList.add('hidden'), 300);
+            }
+        }
+
+        // FILTER & TAB HANDLERS
+        function setTabFilter(tab) {
+            activeTab = tab;
+            const buttons = document.querySelectorAll('.tab-btn');
+            buttons.forEach(btn => {
+                btn.className = 'tab-btn px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-cine-card text-gray-300 border border-cine-lightGray hover:border-cine-gold transition-all';
+            });
+
+            const activeBtn = document.getElementById(`tab-${tab}`);
+            if (activeBtn) {
+                activeBtn.className = 'tab-btn px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-cine-gold text-black shadow-glow-gold transition-all';
+            }
+
+            renderMovies();
+        }
+
+        function filterByTab(tab) {
+            showSection('browse');
+            setTabFilter(tab);
+        }
+
+        function applyFilters() {
+            selectedGenre = document.getElementById('genre-select').value;
+            selectedLang = document.getElementById('lang-select').value;
+            selectedSort = document.getElementById('sort-select').value;
+            renderMovies();
+        }
+
+        function quickFilterGenre(genre) {
+            showSection('browse');
+            document.getElementById('genre-select').value = genre;
+            applyFilters();
+        }
+
+        function resetAllFilters() {
+            activeTab = 'all';
+            selectedGenre = 'all';
+            selectedLang = 'all';
+            selectedSort = 'rating';
+            searchQuery = '';
+            document.getElementById('genre-select').value = 'all';
+            document.getElementById('lang-select').value = 'all';
+            document.getElementById('sort-select').value = 'rating';
+            document.getElementById('nav-search-input').value = '';
+            renderMovies();
+        }
+
+        function handleSearch(event) {
+            searchQuery = event.target.value;
+            const clearBtn = document.getElementById('clear-search-btn');
+            if (searchQuery) {
+                clearBtn?.classList.remove('hidden');
+            } else {
+                clearBtn?.classList.add('hidden');
+            }
+            renderMovies();
+        }
+
+        function clearSearch() {
+            searchQuery = '';
+            document.getElementById('nav-search-input').value = '';
+            document.getElementById('clear-search-btn').classList.add('hidden');
+            renderMovies();
+        }
+
+        function scrollToFilter(type) {
+            showSection('browse');
+            document.getElementById('genres-anchor').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // TRAILER MODAL
+        function openTrailerModal(youtubeId) {
+            const modal = document.getElementById('trailer-modal');
+            const iframe = document.getElementById('trailer-modal-iframe');
+            iframe.src = `https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0`;
+            modal.classList.remove('hidden');
+        }
+
+        function closeTrailerModal() {
+            const modal = document.getElementById('trailer-modal');
+            const iframe = document.getElementById('trailer-modal-iframe');
+            iframe.src = '';
+            modal.classList.add('hidden');
+        }
+
+        // AUTH & INFO MODALS
+        function openAuthModal(tab = 'login') {
+            switchAuthTab(tab);
+            document.getElementById('auth-modal').classList.remove('hidden');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('auth-modal').classList.add('hidden');
+        }
+
+        function switchAuthTab(tab) {
+            const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
+            const tabLogin = document.getElementById('tab-login');
+            const tabSignup = document.getElementById('tab-signup');
+
+            if (tab === 'login') {
+                loginForm.classList.remove('hidden');
+                signupForm.classList.add('hidden');
+                tabLogin.className = 'flex-1 pb-3 text-center text-xs font-extrabold uppercase tracking-wider border-b-2 border-cine-gold text-cine-gold';
+                tabSignup.className = 'flex-1 pb-3 text-center text-xs font-extrabold uppercase tracking-wider border-b-2 border-transparent text-gray-400';
+            } else {
+                loginForm.classList.add('hidden');
+                signupForm.classList.remove('hidden');
+                tabSignup.className = 'flex-1 pb-3 text-center text-xs font-extrabold uppercase tracking-wider border-b-2 border-cine-gold text-cine-gold';
+                tabLogin.className = 'flex-1 pb-3 text-center text-xs font-extrabold uppercase tracking-wider border-b-2 border-transparent text-gray-400';
+            }
+        }
+
+        function handleAuthSubmit(event) {
+            event.preventDefault();
+            const container = document.getElementById('auth-btn-container');
+            container.innerHTML = `
+                <div class="flex items-center gap-2 bg-cine-card border border-cine-gold text-cine-gold px-4 py-2 rounded-full font-bold text-xs shadow-glow-gold">
+                    <i class="fa-solid fa-user-check"></i>
+                    <span>Hi, CineFan</span>
+                </div>
+            `;
+            closeAuthModal();
+            showToast('Signed in successfully!', 'success');
+        }
+
+        function openInfoModal(title, content) {
+            document.getElementById('info-modal-title').innerText = title;
+            document.getElementById('info-modal-content').innerText = content;
+            document.getElementById('info-modal').classList.remove('hidden');
+        }
+
+        function closeInfoModal() {
+            document.getElementById('info-modal').classList.add('hidden');
+        }
+
+        function toggleMobileMenu() {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        }
+
+        // TOAST SYSTEM
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            let icon = 'fa-circle-info text-cine-gold';
+            if (type === 'success') icon = 'fa-circle-check text-emerald-400';
+            if (type === 'error') icon = 'fa-circle-exclamation text-cine-red';
+
+            toast.className = `animate-toast pointer-events-auto p-4 rounded-xl shadow-2xl flex items-center gap-3 text-xs font-bold bg-cine-card text-white border border-cine-lightGray border-l-4 ${type === 'success' ? 'border-l-emerald-500' : 'border-l-cine-gold'}`;
+            toast.innerHTML = `<i class="fa-solid ${icon} text-base"></i> <span>${message}</span>`;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
